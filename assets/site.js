@@ -83,16 +83,38 @@
   document.querySelectorAll('.faq').forEach(function(d){
     var ans = d.querySelector('.ans');
     var b = d.querySelector('button');
-    var setH = function(){ ans.style.maxHeight = d.open ? ans.scrollHeight + 'px' : '0px'; };
+    var setH = function(){ if(ans) ans.style.maxHeight = d.open ? ans.scrollHeight + 'px' : '0px'; };
     if(b){
       b.addEventListener('click', function(ev){
         ev.preventDefault();
-        document.querySelectorAll('.faq').forEach(function(o){ if(o!==d && o.open){ o.open=false; o.querySelector('.ans').style.maxHeight='0px'; } });
+        document.querySelectorAll('.faq').forEach(function(o){ if(o!==d && o.open){ o.open=false; var oa=o.querySelector('.ans'); if(oa) oa.style.maxHeight='0px'; } });
         d.open = !d.open;
         requestAnimationFrame(setH);
       });
     }
   });
+
+  // Open an FAQ when navigated to via hash (e.g. compliance.html#privacy)
+  function openFaqFromHash(){
+    var hash = (window.location.hash || '').replace('#','');
+    if(!hash) return;
+    var target = document.getElementById(hash);
+    if(!target || !target.classList || !target.classList.contains('faq')) return;
+    // Close other FAQs in the same group
+    document.querySelectorAll('.faq').forEach(function(o){
+      if(o!==target && o.open){ o.open=false; var oa=o.querySelector('.ans'); if(oa) oa.style.maxHeight='0px'; }
+    });
+    target.open = true;
+    var ans = target.querySelector('.ans');
+    if(ans){ requestAnimationFrame(function(){ ans.style.maxHeight = ans.scrollHeight + 'px'; }); }
+    // Scroll into view with offset for sticky header
+    setTimeout(function(){
+      var y = target.getBoundingClientRect().top + window.pageYOffset - 100;
+      window.scrollTo({top:y, behavior: reduce ? 'auto' : 'smooth'});
+    }, 60);
+  }
+  openFaqFromHash();
+  window.addEventListener('hashchange', openFaqFromHash);
 
   // consultation form
   var form = document.getElementById('ob-form');
