@@ -220,12 +220,13 @@
       9:  {key:'fall',         eyebrow:'Fall Offer',             emoji:'🍁', tagline:'Fall into focus — outsource the busywork.',               particle:'🍂', count:18, motion:'fall',    anim:'sway',    accent:'autumn'},
       10: {key:'halloween',    eyebrow:'Halloween Special',      emoji:'🎃', tagline:'Spooky savings — treat your back office this month.',     particle:'🎃', count:16, motion:'fall',    anim:'wiggle',  accent:'halloween'},
       11: {key:'thanksgiving', eyebrow:'Thanksgiving Special',   emoji:'🦃', tagline:'Plenty to be thankful for — and plenty to save.',         particle:'🍂', count:18, motion:'fall',    anim:'wiggle',  accent:'autumn'},
-      12: {key:'holidays',     eyebrow:'Winter Holiday Special', emoji:'☃️',  tagline:'Wrap up the year with a vetted team in place.',           particle:'❄️', count:24, motion:'fall',    anim:'sway',    accent:'cool'}
+      12: {key:'christmas',    eyebrow:'Christmas Special',      emoji:'☃️',  tagline:'Merry Christmas — wrap up the year with a vetted team in place.', particle:'❄️', count:26, motion:'fall',    anim:'sway',    accent:'cool'}
     };
-    // Black Friday / Cyber Week overrides Nov 20–30
+    // Black Friday + Cyber Week overrides — Nov 20 through Dec 2
+    // (catches BF Week + Black Friday itself + Cyber Monday + spillover)
     var nowUs = currentUsMonth();
     var theme = THEMES[nowUs.month] || THEMES[1];
-    if(nowUs.month === 11 && nowUs.day >= 20){
+    if((nowUs.month === 11 && nowUs.day >= 20) || (nowUs.month === 12 && nowUs.day <= 2)){
       theme = {key:'black-friday', eyebrow:'Black Friday — Cyber Week', emoji:'🛍️', tagline:'Our biggest savings of the year — limited window.', particle:'✨', count:22, motion:'fall', anim:'bounce', accent:'dark'};
     }
     // If we previously stored a dismiss for the SAME theme key, skip
