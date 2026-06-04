@@ -415,10 +415,17 @@ footer{background:var(--ink);color:#fff;padding:80px 0 36px;}
 .foot-brand p{color:var(--on-dark-2);margin-top:16px;max-width:28em;font-size:.98rem;}
 .foot-langs{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;}
 .foot-langs span{font-size:.74rem;font-weight:700;letter-spacing:.06em;border:1px solid var(--on-dark-line);border-radius:100px;padding:.4em .8em;color:var(--on-dark-2);}
-.foot-social{display:flex;gap:8px;margin-top:18px;}
-.foot-social a{width:32px;height:32px;border-radius:50%;border:1px solid var(--on-dark-line);display:inline-grid;place-items:center;color:var(--on-dark-2);transition:color .2s,border-color .2s,background .2s,transform .25s var(--pop);}
-.foot-social a:hover{color:var(--ink);background:var(--zest);border-color:var(--zest);transform:translateY(-2px);}
-.foot-social a svg{width:14px !important;height:14px !important;display:block;}
+.foot-social{display:flex;gap:18px;margin-top:28px;align-items:center;}
+.foot-social a{display:inline-flex;align-items:center;justify-content:center;color:var(--on-dark-2);transition:color .2s,transform .25s var(--pop);}
+.foot-social a:hover{color:var(--zest);transform:translateY(-2px);}
+.foot-social a svg{width:20px !important;height:20px !important;display:block;}
+
+/* on-light social row (used on About page body) */
+.on-light-social{display:flex;gap:18px;align-items:center;margin-top:36px;padding-top:28px;border-top:1px solid var(--line);flex-wrap:wrap;}
+.on-light-social .label{font-family:var(--sans);font-weight:700;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);}
+.on-light-social a{display:inline-flex;align-items:center;justify-content:center;color:var(--ink-2);transition:color .2s,transform .25s var(--pop);}
+.on-light-social a:hover{color:var(--indigo);transform:translateY(-2px);}
+.on-light-social a svg{width:20px !important;height:20px !important;display:block;}
 .foot-col h4{font-family:var(--sans);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--zest);margin-bottom:18px;font-weight:700;}
 .foot-col a,.foot-col .x{display:block;color:#fff;font-weight:500;margin-bottom:12px;font-size:.97rem;opacity:.8;transition:opacity .2s,color .2s;}
 .foot-col a:hover{opacity:1;color:var(--zest);}
