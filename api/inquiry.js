@@ -36,7 +36,7 @@ export default async function handler(req, res) {
   }
   body = body || {};
 
-  const { name, company, email, service, message, hp, source } = body;
+  const { name, company, email, phone, service, message, hp, source } = body;
 
   // Honeypot — bots fill hidden fields; silently succeed without sending
   if (hp && hp.toString().trim().length > 0) {
@@ -61,6 +61,7 @@ export default async function handler(req, res) {
     name: cap(name, 200).trim(),
     company: cap(company, 200).trim(),
     email: cap(email, 200).trim(),
+    phone: cap(phone, 60).trim(),
     service: cap(service, 200).trim(),
     message: cap(message, 5000).trim(),
     source: cap(source, 80).trim() || 'contact-form',
@@ -75,6 +76,7 @@ export default async function handler(req, res) {
         <tr><td style="padding:6px 0;color:#43465C;width:120px;">Name</td><td style="padding:6px 0;"><strong>${esc(safe.name)}</strong></td></tr>
         <tr><td style="padding:6px 0;color:#43465C;">Company</td><td style="padding:6px 0;">${esc(safe.company) || '<span style="color:#83879B;">—</span>'}</td></tr>
         <tr><td style="padding:6px 0;color:#43465C;">Email</td><td style="padding:6px 0;"><a href="mailto:${esc(safe.email)}" style="color:#3D3DF2;">${esc(safe.email)}</a></td></tr>
+        <tr><td style="padding:6px 0;color:#43465C;">Phone</td><td style="padding:6px 0;">${safe.phone ? `<a href="tel:${esc(safe.phone)}" style="color:#3D3DF2;">${esc(safe.phone)}</a>` : '<span style="color:#83879B;">—</span>'}</td></tr>
         <tr><td style="padding:6px 0;color:#43465C;">Service</td><td style="padding:6px 0;">${esc(safe.service) || '<span style="color:#83879B;">—</span>'}</td></tr>
         <tr><td style="padding:6px 0;color:#43465C;">Source</td><td style="padding:6px 0;">${esc(safe.source)}</td></tr>
       </table>
@@ -92,6 +94,7 @@ export default async function handler(req, res) {
     `Name:    ${safe.name}`,
     `Company: ${safe.company || '—'}`,
     `Email:   ${safe.email}`,
+    `Phone:   ${safe.phone || '—'}`,
     `Service: ${safe.service || '—'}`,
     `Source:  ${safe.source}`,
     ``,

@@ -249,6 +249,7 @@
         '<form class="lead-pop-form" novalidate>'+
           '<input name="name" type="text" placeholder="Full name" autocomplete="name" required />'+
           '<input name="email" type="email" placeholder="Work email" autocomplete="email" required />'+
+          '<input name="phone" type="tel" placeholder="Phone number" autocomplete="tel" inputmode="tel" required />'+
           '<select name="service">'+
             '<option value="" disabled selected>What do you need help with?</option>'+
             '<option>Virtual Assistant</option>'+
@@ -293,6 +294,7 @@
     var errBox = pop.querySelector('.lead-pop-err');
     var nameInp = form.querySelector('input[name="name"]');
     var emailInp = form.querySelector('input[name="email"]');
+    var phoneInp = form.querySelector('input[name="phone"]');
     var shown = false;
 
     function remember(submitted){
@@ -341,14 +343,16 @@
       e.preventDefault();
       errBox.classList.remove('show');
       errBox.textContent = '';
-      if(!nameInp.value.trim() || !emailInp.value.trim()){
-        (!nameInp.value.trim() ? nameInp : emailInp).focus();
-        return;
-      }
+      var missing = null;
+      if(!nameInp.value.trim()) missing = nameInp;
+      else if(!emailInp.value.trim()) missing = emailInp;
+      else if(!phoneInp.value.trim()) missing = phoneInp;
+      if(missing){ missing.focus(); return; }
       form.classList.add('sending');
       var data = {
         name: nameInp.value,
         email: emailInp.value,
+        phone: phoneInp.value,
         service: form.querySelector('select[name="service"]').value || '',
         message: '(Claimed seasonal promo: ' + theme.eyebrow + ' — up to 75% off — from ' + path + ')',
         source: 'promo-' + theme.key,
