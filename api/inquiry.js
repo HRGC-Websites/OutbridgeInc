@@ -1,0 +1,137 @@
+// Vercel serverless function — POST /api/inquiry
+// Receives the consultation form, validates input, sends email via Resend.
+//
+// Required env var (set in Vercel project settings → Environment Variables):
+//   RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx
+//
+// Sender domain must be verified in Resend before this works in production.
+// During domain verification, swap INQUIRY_FROM for 'onboarding@resend.dev'
+// (note: that sender will only deliver to the Resend account email).
+
+import { Resend } from 'resend';
+
+const INQUIRY_TO = 'hello@outbridgeinc.com';
+const INQUIRY_FROM = 'Outbridge Inquiries <inquiries@outbridgeinc.com>';
+
+export default async function handler(req, res) {
+  // Only POST is accepted
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ ok: false, error: 'Method not allowed.' });
+  }
+
+  // Env var check — fail clearly rather than throwing
+  if (!process.env.RESEND_API_KEY) {
+    console.error('RESEND_API_KEY is not configured');
+    return res.status(503).json({
+      ok: false,
+      error: 'Inquiry endpoint is not yet configured. Please email hello@outbridgeinc.com directly.',
+    });
+  }
+
+  // Parse body. Vercel auto-parses JSON when content-type is application/json.
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
+  }
+  body = body || {};
+
+  const { name, company, email, service, message, hp } = body;
+
+  // Honeypot — bots fill hidden fields; silently succeed without sending
+  if (hp && hp.toString().trim().length > 0) {
+    return res.status(200).json({ ok: true });
+  }
+
+  // Validation
+  const errors = [];
+  if (!name || !name.toString().trim()) errors.push('Name is required.');
+  if (!email || !email.toString().trim()) errors.push('Email is required.');
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (email && !emailRe.test(email.toString().trim())) {
+    errors.push('Email format looks invalid.');
+  }
+  if (errors.length) {
+    return res.status(400).json({ ok: false, error: errors.join(' ') });
+  }
+
+  // Cap field lengths so an attacker can't paste an entire novel
+  const cap = (s, n) => (s == null ? '' : s.toString().slice(0, n));
+  const safe = {
+    name: cap(name, 200).trim(),
+    company: cap(company, 200).trim(),
+    email: cap(email, 200).trim(),
+    service: cap(service, 200).trim(),
+    message: cap(message, 5000).trim(),
+  };
+
+  const subject = `New inquiry — ${safe.name}${safe.company ? ' (' + safe.company + ')' : ''}`;
+
+  const html = `
+    <div style="font-family:Hanken Grotesk,Helvetica,Arial,sans-serif;color:#0E0F1C;font-size:15px;line-height:1.55;">
+      <h2 style="font-family:Bricolage Grotesque,Hanken Grotesk,sans-serif;font-weight:800;letter-spacing:-.02em;color:#0E0F1C;margin:0 0 18px;">New inquiry from outbridgeinc.com</h2>
+      <table style="border-collapse:collapse;width:100%;max-width:640px;">
+        <tr><td style="padding:6px 0;color:#43465C;width:120px;">Name</td><td style="padding:6px 0;"><strong>${esc(safe.name)}</strong></td></tr>
+        <tr><td style="padding:6px 0;color:#43465C;">Company</td><td style="padding:6px 0;">${esc(safe.company) || '<span style="color:#83879B;">—</span>'}</td></tr>
+        <tr><td style="padding:6px 0;color:#43465C;">Email</td><td style="padding:6px 0;"><a href="mailto:${esc(safe.email)}" style="color:#3D3DF2;">${esc(safe.email)}</a></td></tr>
+        <tr><td style="padding:6px 0;color:#43465C;">Service</td><td style="padding:6px 0;">${esc(safe.service) || '<span style="color:#83879B;">—</span>'}</td></tr>
+      </table>
+      <hr style="border:none;border-top:1px solid rgba(14,15,28,.12);margin:22px 0;" />
+      <div style="color:#43465C;margin-bottom:8px;">Message</div>
+      <div style="white-space:pre-wrap;color:#0E0F1C;">${esc(safe.message) || '<span style="color:#83879B;">(no message provided)</span>'}</div>
+      <hr style="border:none;border-top:1px solid rgba(14,15,28,.12);margin:22px 0;" />
+      <div style="color:#83879B;font-size:12px;">Reply directly to this email to respond to the prospect. Sent automatically by outbridgeinc.com.</div>
+    </div>
+  `;
+
+  const text = [
+    `New inquiry from outbridgeinc.com`,
+    ``,
+    `Name:    ${safe.name}`,
+    `Company: ${safe.company || '—'}`,
+    `Email:   ${safe.email}`,
+    `Service: ${safe.service || '—'}`,
+    ``,
+    `Message:`,
+    safe.message || '(no message provided)',
+    ``,
+    `— Sent automatically by outbridgeinc.com. Reply to respond to the prospect.`,
+  ].join('\n');
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { error } = await resend.emails.send({
+      from: INQUIRY_FROM,
+      to: INQUIRY_TO,
+      replyTo: safe.email,
+      subject,
+      html,
+      text,
+    });
+
+    if (error) {
+      console.error('Resend returned error:', error);
+      return res.status(502).json({
+        ok: false,
+        error: 'We could not deliver your inquiry. Please email hello@outbridgeinc.com directly.',
+      });
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('Inquiry send threw:', err);
+    return res.status(500).json({
+      ok: false,
+      error: 'Unexpected server error. Please email hello@outbridgeinc.com directly.',
+    });
+  }
+}
+
+function esc(s) {
+  return (s == null ? '' : s.toString())
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

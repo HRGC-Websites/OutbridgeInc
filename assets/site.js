@@ -116,18 +116,51 @@
   openFaqFromHash();
   window.addEventListener('hashchange', openFaqFromHash);
 
-  // consultation form
+  // consultation form — POST to /api/inquiry, handle states
   var form = document.getElementById('ob-form');
   if(form){
+    var errBox = form.querySelector('.form-err');
+    function showError(msg){
+      if(errBox){ errBox.textContent = msg; }
+      form.classList.add('errored');
+      form.classList.remove('sending');
+    }
     form.addEventListener('submit', function(e){
       e.preventDefault();
       var name = document.getElementById('f-name');
       var email = document.getElementById('f-email');
       if(!name.value.trim() || !email.value.trim()){
+        form.classList.remove('errored');
         (!name.value.trim() ? name : email).focus();
         return;
       }
-      form.classList.add('sent');
+      form.classList.remove('errored');
+      form.classList.add('sending');
+      var data = {
+        name: name.value,
+        company: (document.getElementById('f-company')||{}).value || '',
+        email: email.value,
+        service: (document.getElementById('f-service')||{}).value || '',
+        message: (document.getElementById('f-msg')||{}).value || '',
+        hp: (document.getElementById('f-website')||{}).value || ''
+      };
+      fetch(form.getAttribute('action') || '/api/inquiry', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: JSON.stringify(data)
+      }).then(function(r){
+        return r.json().then(function(j){ return {status:r.status, body:j}; }).catch(function(){ return {status:r.status, body:{}}; });
+      }).then(function(out){
+        if(out.status >= 200 && out.status < 300 && out.body && out.body.ok){
+          form.classList.remove('sending');
+          form.classList.add('sent');
+          return;
+        }
+        var msg = (out.body && out.body.error) || 'Something went wrong sending your inquiry. Please email hello@outbridgeinc.com directly.';
+        showError(msg);
+      }).catch(function(){
+        showError('Could not reach the server. Please email hello@outbridgeinc.com directly.');
+      });
     });
   }
 

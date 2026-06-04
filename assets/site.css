@@ -398,6 +398,12 @@ form .btn{width:100%;justify-content:center;margin-top:6px;}
 .form-ok p{color:var(--on-dark-2);}
 form.sent .form-body{display:none;}
 form.sent .form-ok{display:block;}
+/* honeypot — visually + AT-hidden, still focusable as plain input */
+.hp-field{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden;}
+/* inline error state */
+.form-err{display:none;margin-top:14px;padding:14px 16px;border-radius:8px;background:rgba(255,80,80,.10);border:1px solid rgba(255,80,80,.35);color:#FFC8C8;font-size:.92rem;line-height:1.45;}
+form.errored .form-err{display:block;}
+form.sending button[type="submit"]{opacity:.65;pointer-events:none;}
 @media(max-width:860px){.contact-grid{grid-template-columns:1fr;gap:40px;}}
 @media(max-width:520px){.field-row{grid-template-columns:1fr;}}
 

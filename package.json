@@ -1,0 +1,13 @@
+{
+  "name": "outbridge-inc",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Outbridge Inc marketing site + inquiry API",
+  "type": "module",
+  "dependencies": {
+    "resend": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

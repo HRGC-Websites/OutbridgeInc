@@ -68,16 +68,16 @@
         </div>
       </div>
 
-      <form class="reveal" id="ob-form" novalidate>
+      <form class="reveal" id="ob-form" action="/api/inquiry" method="POST" novalidate>
         <div class="form-body">
           <div class="field-row">
-            <div class="field"><label for="f-name">Full name</label><input id="f-name" type="text" placeholder="Jane Doe" required /></div>
-            <div class="field"><label for="f-company">Company</label><input id="f-company" type="text" placeholder="Acme Inc." /></div>
+            <div class="field"><label for="f-name">Full name</label><input id="f-name" name="name" type="text" placeholder="Jane Doe" autocomplete="name" required /></div>
+            <div class="field"><label for="f-company">Company</label><input id="f-company" name="company" type="text" placeholder="Acme Inc." autocomplete="organization" /></div>
           </div>
-          <div class="field"><label for="f-email">Work email</label><input id="f-email" type="email" placeholder="jane@acme.com" required /></div>
+          <div class="field"><label for="f-email">Work email</label><input id="f-email" name="email" type="email" placeholder="jane@acme.com" autocomplete="email" required /></div>
           <div class="field">
             <label for="f-service">What do you need help with?</label>
-            <select id="f-service">
+            <select id="f-service" name="service">
               <option>Virtual Assistant</option>
               <option>Customer Support</option>
               <option>Sales Agents</option>
@@ -87,12 +87,15 @@
           </div>
           <div class="field">
             <label for="f-msg">Tell us about your workload</label>
-            <textarea id="f-msg" placeholder="A few lines about what you'd like to hand off, volumes, languages and hours…"></textarea>
+            <textarea id="f-msg" name="message" placeholder="A few lines about what you'd like to hand off, volumes, languages and hours…"></textarea>
           </div>
+          <!-- honeypot — bots fill, humans never see it -->
+          <div class="field hp-field" aria-hidden="true"><label for="f-website">Website</label><input id="f-website" name="hp" type="text" tabindex="-1" autocomplete="off" /></div>
           <button class="btn btn-accent" type="submit">Book my free consultation
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
           <p class="form-note">We'll get back to you within one business day. Your details stay confidential.</p>
+          <div class="form-err" role="alert"></div>
         </div>
         <div class="form-ok">
           <div class="ok-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg></div>
