@@ -173,4 +173,148 @@
       sf.closest('.subscribe').classList.add('done');
     });
   });
+
+  // ---------- lead popup ----------
+  (function leadPopup(){
+    var KEY = 'ob_lead_pop_v1';
+    var DISMISS_DAYS = 30;
+    var path = (window.location.pathname || '').toLowerCase();
+    // Don't show on the contact page — they're already there to convert
+    if(path.indexOf('/contact') !== -1 || path.indexOf('contact.html') !== -1) return;
+    // Honor previous dismiss / submit
+    try{
+      var stored = localStorage.getItem(KEY);
+      if(stored){
+        var s = JSON.parse(stored);
+        if(s && s.expiresAt && s.expiresAt > Date.now()) return;
+      }
+    }catch(e){}
+
+    // Build the popup DOM
+    var pop = document.createElement('div');
+    pop.className = 'lead-pop';
+    pop.setAttribute('role', 'dialog');
+    pop.setAttribute('aria-modal', 'true');
+    pop.setAttribute('aria-labelledby', 'lp-heading');
+    pop.innerHTML =
+      '<div class="lead-pop-card" role="document">'+
+        '<button class="lead-pop-close" type="button" aria-label="Close">&times;</button>'+
+        '<span class="lead-pop-eyebrow">Free consultation</span>'+
+        '<h3 id="lp-heading">Let’s build the team your business <em>needs</em>.</h3>'+
+        '<p>A 30-minute discovery call — no obligation, fully confidential. We’ll come back within one business day.</p>'+
+        '<form class="lead-pop-form" novalidate>'+
+          '<input name="name" type="text" placeholder="Full name" autocomplete="name" required />'+
+          '<input name="email" type="email" placeholder="Work email" autocomplete="email" required />'+
+          '<select name="service">'+
+            '<option value="" disabled selected>What do you need help with?</option>'+
+            '<option>Virtual Assistant</option>'+
+            '<option>Customer Support</option>'+
+            '<option>Sales Agents</option>'+
+            '<option>BPO / managed team</option>'+
+            '<option>Not sure yet — advise me</option>'+
+          '</select>'+
+          '<input class="hp-field" name="hp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;" />'+
+          '<button class="btn btn-zest" type="submit">Book my consultation '+
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'+
+          '</button>'+
+          '<div class="lead-pop-err" role="alert"></div>'+
+        '</form>'+
+        '<p class="lead-pop-note">We never share your details. NDAs as standard on every engagement.</p>'+
+        '<div class="lead-pop-ok">'+
+          '<div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>'+
+          '<h4>Thank you — request received.</h4>'+
+          '<p>A member of the Outbridge team will reach out within one business day.</p>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(pop);
+
+    var card = pop.querySelector('.lead-pop-card');
+    var form = pop.querySelector('.lead-pop-form');
+    var errBox = pop.querySelector('.lead-pop-err');
+    var nameInp = form.querySelector('input[name="name"]');
+    var emailInp = form.querySelector('input[name="email"]');
+    var shown = false;
+
+    function remember(submitted){
+      try{
+        localStorage.setItem(KEY, JSON.stringify({
+          expiresAt: Date.now() + DISMISS_DAYS*24*3600*1000,
+          submitted: !!submitted
+        }));
+      }catch(e){}
+    }
+    function open(){
+      if(shown) return;
+      shown = true;
+      pop.classList.add('open');
+      setTimeout(function(){ if(nameInp) try{ nameInp.focus(); }catch(e){} }, 160);
+    }
+    function close(persist){
+      pop.classList.remove('open');
+      if(persist) remember(false);
+    }
+
+    // Triggers
+    var idleTimer = setTimeout(open, 25000); // 25s of dwell
+    var onScroll = function(){
+      var h = document.documentElement;
+      var pct = (window.scrollY + window.innerHeight) / Math.max(h.scrollHeight, 1);
+      if(pct > 0.55){ window.removeEventListener('scroll', onScroll); open(); }
+    };
+    window.addEventListener('scroll', onScroll, {passive:true});
+    if(window.matchMedia && window.matchMedia('(pointer:fine)').matches){
+      document.addEventListener('mouseleave', function(e){
+        if(e.clientY <= 0) open();
+      });
+    }
+
+    // Close handlers
+    pop.querySelector('.lead-pop-close').addEventListener('click', function(){ close(true); });
+    pop.addEventListener('click', function(e){ if(e.target === pop) close(true); });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && pop.classList.contains('open')) close(true);
+    });
+
+    // Submit handler
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      errBox.classList.remove('show');
+      errBox.textContent = '';
+      if(!nameInp.value.trim() || !emailInp.value.trim()){
+        (!nameInp.value.trim() ? nameInp : emailInp).focus();
+        return;
+      }
+      form.classList.add('sending');
+      var data = {
+        name: nameInp.value,
+        email: emailInp.value,
+        service: form.querySelector('select[name="service"]').value || '',
+        message: '(Submitted via on-site popup on ' + path + ')',
+        source: 'popup',
+        hp: form.querySelector('input[name="hp"]').value || ''
+      };
+      fetch('/api/inquiry', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: JSON.stringify(data)
+      }).then(function(r){
+        return r.json().then(function(j){ return {status:r.status, body:j}; }).catch(function(){ return {status:r.status, body:{}}; });
+      }).then(function(out){
+        form.classList.remove('sending');
+        if(out.status >= 200 && out.status < 300 && out.body && out.body.ok){
+          card.classList.add('sent');
+          remember(true);
+          setTimeout(function(){ pop.classList.remove('open'); }, 4500);
+          return;
+        }
+        var msg = (out.body && out.body.error) || 'Could not send. Please email hello@outbridgeinc.com directly.';
+        errBox.textContent = msg;
+        errBox.classList.add('show');
+      }).catch(function(){
+        form.classList.remove('sending');
+        errBox.textContent = 'Network error. Please email hello@outbridgeinc.com directly.';
+        errBox.classList.add('show');
+      });
+    });
+  })();
 })();

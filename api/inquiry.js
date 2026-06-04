@@ -36,7 +36,7 @@ export default async function handler(req, res) {
   }
   body = body || {};
 
-  const { name, company, email, service, message, hp } = body;
+  const { name, company, email, service, message, hp, source } = body;
 
   // Honeypot — bots fill hidden fields; silently succeed without sending
   if (hp && hp.toString().trim().length > 0) {
@@ -63,9 +63,10 @@ export default async function handler(req, res) {
     email: cap(email, 200).trim(),
     service: cap(service, 200).trim(),
     message: cap(message, 5000).trim(),
+    source: cap(source, 80).trim() || 'contact-form',
   };
 
-  const subject = `New inquiry — ${safe.name}${safe.company ? ' (' + safe.company + ')' : ''}`;
+  const subject = `[${safe.source}] New inquiry — ${safe.name}${safe.company ? ' (' + safe.company + ')' : ''}`;
 
   const html = `
     <div style="font-family:Hanken Grotesk,Helvetica,Arial,sans-serif;color:#0E0F1C;font-size:15px;line-height:1.55;">
@@ -75,6 +76,7 @@ export default async function handler(req, res) {
         <tr><td style="padding:6px 0;color:#43465C;">Company</td><td style="padding:6px 0;">${esc(safe.company) || '<span style="color:#83879B;">—</span>'}</td></tr>
         <tr><td style="padding:6px 0;color:#43465C;">Email</td><td style="padding:6px 0;"><a href="mailto:${esc(safe.email)}" style="color:#3D3DF2;">${esc(safe.email)}</a></td></tr>
         <tr><td style="padding:6px 0;color:#43465C;">Service</td><td style="padding:6px 0;">${esc(safe.service) || '<span style="color:#83879B;">—</span>'}</td></tr>
+        <tr><td style="padding:6px 0;color:#43465C;">Source</td><td style="padding:6px 0;">${esc(safe.source)}</td></tr>
       </table>
       <hr style="border:none;border-top:1px solid rgba(14,15,28,.12);margin:22px 0;" />
       <div style="color:#43465C;margin-bottom:8px;">Message</div>
@@ -91,6 +93,7 @@ export default async function handler(req, res) {
     `Company: ${safe.company || '—'}`,
     `Email:   ${safe.email}`,
     `Service: ${safe.service || '—'}`,
+    `Source:  ${safe.source}`,
     ``,
     `Message:`,
     safe.message || '(no message provided)',
