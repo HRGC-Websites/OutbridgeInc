@@ -547,6 +547,87 @@ footer{background:var(--ink);color:#fff;padding:80px 0 36px;}
 .lead-pop-form.sending button{opacity:.65;pointer-events:none;}
 @media(max-width:520px){.lead-pop{padding:14px;}.lead-pop-card{padding:30px 24px;}.lead-pop-card h3{font-size:1.35rem;}}
 
+/* ---------- seasonal promo popup ---------- */
+.seasonal-card{overflow:hidden;text-align:center;}
+.seasonal-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit;z-index:0;}
+.seasonal-card>*{position:relative;z-index:1;}
+.seasonal-emoji{font-size:3.6rem;line-height:1;margin:6px auto 14px;display:inline-block;filter:drop-shadow(0 8px 18px rgba(0,0,0,.15));}
+.seasonal-eyebrow{justify-content:center;display:inline-flex;}
+.seasonal-headline{font-size:2rem;letter-spacing:-.03em;line-height:1.05;}
+.seasonal-headline em{font-style:normal;color:var(--indigo);background:linear-gradient(180deg,transparent 55%,rgba(203,251,69,.55) 55%,rgba(203,251,69,.55) 90%,transparent 90%);padding:0 .12em;}
+.seasonal-card>p{text-align:center;max-width:36em;margin:10px auto 22px;}
+.seasonal-card .lead-pop-form{max-width:380px;margin:0 auto;}
+.seasonal-card .lead-pop-note{text-align:center;}
+
+/* Particle motion */
+.seasonal-particle{position:absolute;top:-30px;display:block;will-change:transform,opacity;}
+.seasonal-particles.motion-fall .seasonal-particle{animation:sp-fall linear infinite;}
+.seasonal-particles.motion-rise .seasonal-particle{top:auto;bottom:-30px;animation:sp-rise linear infinite;}
+.seasonal-particles.motion-sway .seasonal-particle{top:auto;bottom:-30px;animation:sp-sway ease-in-out infinite;}
+@keyframes sp-fall{
+  0%{transform:translate3d(0,0,0) rotate(0deg);}
+  100%{transform:translate3d(20px,640px,0) rotate(360deg);}
+}
+@keyframes sp-rise{
+  0%{transform:translate3d(0,0,0) rotate(0deg);}
+  100%{transform:translate3d(-20px,-640px,0) rotate(-360deg);}
+}
+@keyframes sp-sway{
+  0%,100%{transform:translate3d(-12px,0,0) rotate(-10deg);}
+  50%{transform:translate3d(12px,-30px,0) rotate(10deg);}
+}
+
+/* Hero emoji animations */
+@keyframes se-bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);}}
+@keyframes se-sway{0%,100%{transform:rotate(-10deg);}50%{transform:rotate(10deg);}}
+@keyframes se-wiggle{0%,100%{transform:translateY(0) rotate(-6deg);}25%{transform:translateY(-8px) rotate(4deg);}50%{transform:translateY(-2px) rotate(-2deg);}75%{transform:translateY(-10px) rotate(8deg);}}
+.seasonal-emoji.anim-bounce{animation:se-bounce 2.4s ease-in-out infinite;}
+.seasonal-emoji.anim-sway{animation:se-sway 3.4s ease-in-out infinite;transform-origin:50% 80%;}
+.seasonal-emoji.anim-wiggle{animation:se-wiggle 3s ease-in-out infinite;transform-origin:50% 70%;}
+
+/* Theme accents */
+.theme-halloween .seasonal-eyebrow{color:#E36A2A;}
+.theme-halloween .seasonal-headline em{color:#E36A2A;background:linear-gradient(180deg,transparent 55%,rgba(255,176,0,.45) 55%,rgba(255,176,0,.45) 90%,transparent 90%);}
+.theme-halloween .seasonal-card{background:linear-gradient(180deg,#FFF8F0 0%,#FFFFFF 38%);}
+.theme-cool .seasonal-eyebrow{color:#2A7AC7;}
+.theme-cool .seasonal-headline em{color:#2A7AC7;background:linear-gradient(180deg,transparent 55%,rgba(170,225,255,.55) 55%,rgba(170,225,255,.55) 90%,transparent 90%);}
+.theme-cool .seasonal-card{background:linear-gradient(180deg,#F3F9FF 0%,#FFFFFF 40%);}
+.theme-rose .seasonal-eyebrow{color:#D83A6B;}
+.theme-rose .seasonal-headline em{color:#D83A6B;background:linear-gradient(180deg,transparent 55%,rgba(255,200,220,.65) 55%,rgba(255,200,220,.65) 90%,transparent 90%);}
+.theme-rose .seasonal-card{background:linear-gradient(180deg,#FFF3F6 0%,#FFFFFF 40%);}
+.theme-green .seasonal-eyebrow{color:#1F8A52;}
+.theme-green .seasonal-headline em{color:#1F8A52;background:linear-gradient(180deg,transparent 55%,rgba(203,251,69,.55) 55%,rgba(203,251,69,.55) 90%,transparent 90%);}
+.theme-green .seasonal-card{background:linear-gradient(180deg,#F1FBEF 0%,#FFFFFF 40%);}
+.theme-pastel .seasonal-eyebrow{color:#B560C9;}
+.theme-pastel .seasonal-headline em{color:#B560C9;background:linear-gradient(180deg,transparent 55%,rgba(240,210,255,.65) 55%,rgba(240,210,255,.65) 90%,transparent 90%);}
+.theme-pastel .seasonal-card{background:linear-gradient(180deg,#FBF4FF 0%,#FFFFFF 40%);}
+.theme-warm .seasonal-eyebrow{color:#E08A1A;}
+.theme-warm .seasonal-headline em{color:#E08A1A;background:linear-gradient(180deg,transparent 55%,rgba(255,220,140,.65) 55%,rgba(255,220,140,.65) 90%,transparent 90%);}
+.theme-warm .seasonal-card{background:linear-gradient(180deg,#FFF9EC 0%,#FFFFFF 40%);}
+.theme-patriot .seasonal-eyebrow{color:#B0263A;}
+.theme-patriot .seasonal-headline em{color:#B0263A;background:linear-gradient(180deg,transparent 55%,rgba(160,180,255,.55) 55%,rgba(160,180,255,.55) 90%,transparent 90%);}
+.theme-patriot .seasonal-card{background:linear-gradient(180deg,#F4F6FF 0%,#FFFFFF 40%);}
+.theme-autumn .seasonal-eyebrow{color:#C25A1F;}
+.theme-autumn .seasonal-headline em{color:#C25A1F;background:linear-gradient(180deg,transparent 55%,rgba(255,200,120,.55) 55%,rgba(255,200,120,.55) 90%,transparent 90%);}
+.theme-autumn .seasonal-card{background:linear-gradient(180deg,#FFF6EC 0%,#FFFFFF 42%);}
+.theme-dark .seasonal-eyebrow{color:var(--zest-deep);}
+.theme-dark .seasonal-headline em{color:var(--zest-deep);background:linear-gradient(180deg,transparent 55%,rgba(203,251,69,.65) 55%,rgba(203,251,69,.65) 90%,transparent 90%);}
+.theme-dark .seasonal-card{background:linear-gradient(180deg,#101120 0%,#1A1B30 100%);color:#fff;}
+.theme-dark .seasonal-card h3,.theme-dark .seasonal-card h4{color:#fff;}
+.theme-dark .seasonal-card>p,.theme-dark .lead-pop-note{color:rgba(255,255,255,.7);}
+.theme-dark .lead-pop-form input,.theme-dark .lead-pop-form select{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18);color:#fff;}
+.theme-dark .lead-pop-form input::placeholder{color:rgba(255,255,255,.45);}
+.theme-dark .lead-pop-close{color:rgba(255,255,255,.7);}
+.theme-dark .lead-pop-close:hover{background:rgba(255,255,255,.08);color:#fff;}
+
+@media(prefers-reduced-motion:reduce){
+  .seasonal-particle,.seasonal-emoji{animation:none !important;}
+}
+@media(max-width:520px){
+  .seasonal-emoji{font-size:3rem;}
+  .seasonal-headline{font-size:1.7rem;}
+}
+
 /* ---------- reveal ---------- */
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--pop);}
 .reveal.in{opacity:1;transform:none;}

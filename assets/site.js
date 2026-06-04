@@ -174,34 +174,77 @@
     });
   });
 
-  // ---------- lead popup ----------
-  (function leadPopup(){
-    var KEY = 'ob_lead_pop_v1';
-    var DISMISS_DAYS = 30;
+  // ---------- seasonal promo popup ----------
+  (function seasonalPopup(){
+    var KEY = 'ob_seasonal_v1';
+    var DISMISS_DAYS = 14;
     var path = (window.location.pathname || '').toLowerCase();
-    // Don't show on the contact page — they're already there to convert
     if(path.indexOf('/contact') !== -1 || path.indexOf('contact.html') !== -1) return;
-    // Honor previous dismiss / submit
+
+    // Respect dismiss / submit unless theme key changed (new month = new popup)
     try{
-      var stored = localStorage.getItem(KEY);
-      if(stored){
-        var s = JSON.parse(stored);
-        if(s && s.expiresAt && s.expiresAt > Date.now()) return;
+      var stored = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if(stored && stored.expiresAt && stored.expiresAt > Date.now() && stored.themeKey){
+        // Will re-check after we know this month's theme
+        var prevKey = stored.themeKey;
       }
     }catch(e){}
 
-    // Build the popup DOM
+    // Determine current month using US Eastern Time
+    function currentUsMonth(){
+      try{
+        var fmt = new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', month:'numeric', day:'numeric'});
+        var parts = fmt.formatToParts(new Date());
+        var m = 1, d = 1;
+        for(var i=0;i<parts.length;i++){
+          if(parts[i].type==='month') m = parseInt(parts[i].value,10);
+          if(parts[i].type==='day') d = parseInt(parts[i].value,10);
+        }
+        return {month:m, day:d};
+      }catch(e){
+        var now = new Date();
+        return {month: now.getMonth()+1, day: now.getDate()};
+      }
+    }
+
+    // Theme map keyed by month (1-12). November flips to Black-Friday from the 20th.
+    var THEMES = {
+      1:  {key:'new-year',     eyebrow:'New Year Offer',         emoji:'🎉', tagline:'New year, fresh team — start 2026 strong.',                particle:'❄️', count:18, motion:'fall',    anim:'wiggle',  accent:'cool'},
+      2:  {key:'valentines',   eyebrow:'February Special',       emoji:'💕', tagline:'Show your customers the love — and the response times.',  particle:'❤️', count:14, motion:'rise',    anim:'bounce',  accent:'rose'},
+      3:  {key:'st-patricks',  eyebrow:'St. Patrick’s Offer',    emoji:'🍀', tagline:'A little luck on your operations.',                       particle:'🍀', count:14, motion:'fall',    anim:'sway',    accent:'green'},
+      4:  {key:'spring',       eyebrow:'Spring Offer',           emoji:'🌷', tagline:'Spring into action with a vetted team in place.',         particle:'🌸', count:14, motion:'fall',    anim:'sway',    accent:'pastel'},
+      5:  {key:'may',          eyebrow:'May Special',            emoji:'🌸', tagline:'Bloom your operations with Outbridge.',                   particle:'🌼', count:14, motion:'fall',    anim:'sway',    accent:'pastel'},
+      6:  {key:'summer-start', eyebrow:'Summer Offer',           emoji:'☀️',  tagline:'Soak up the summer — we’ll handle the work.',             particle:'☀️',  count:10, motion:'sway',    anim:'wiggle',  accent:'warm'},
+      7:  {key:'july-4th',     eyebrow:'4th of July Special',    emoji:'🎆', tagline:'Independence Day savings on every engagement.',           particle:'🎆', count:12, motion:'sway',    anim:'bounce',  accent:'patriot'},
+      8:  {key:'late-summer',  eyebrow:'Late Summer Special',    emoji:'🌻', tagline:'Back to business with a sharper team.',                   particle:'🌻', count:12, motion:'fall',    anim:'sway',    accent:'warm'},
+      9:  {key:'fall',         eyebrow:'Fall Offer',             emoji:'🍁', tagline:'Fall into focus — outsource the busywork.',               particle:'🍂', count:18, motion:'fall',    anim:'sway',    accent:'autumn'},
+      10: {key:'halloween',    eyebrow:'Halloween Special',      emoji:'🎃', tagline:'Spooky savings — treat your back office this month.',     particle:'🎃', count:16, motion:'fall',    anim:'wiggle',  accent:'halloween'},
+      11: {key:'thanksgiving', eyebrow:'Thanksgiving Special',   emoji:'🦃', tagline:'Plenty to be thankful for — and plenty to save.',         particle:'🍂', count:18, motion:'fall',    anim:'wiggle',  accent:'autumn'},
+      12: {key:'holidays',     eyebrow:'Winter Holiday Special', emoji:'☃️',  tagline:'Wrap up the year with a vetted team in place.',           particle:'❄️', count:24, motion:'fall',    anim:'sway',    accent:'cool'}
+    };
+    // Black Friday / Cyber Week overrides Nov 20–30
+    var nowUs = currentUsMonth();
+    var theme = THEMES[nowUs.month] || THEMES[1];
+    if(nowUs.month === 11 && nowUs.day >= 20){
+      theme = {key:'black-friday', eyebrow:'Black Friday — Cyber Week', emoji:'🛍️', tagline:'Our biggest savings of the year — limited window.', particle:'✨', count:22, motion:'fall', anim:'bounce', accent:'dark'};
+    }
+    // If we previously stored a dismiss for the SAME theme key, skip
+    if(typeof prevKey !== 'undefined' && prevKey === theme.key) return;
+
+    // Build the popup DOM (reuses .lead-pop shell + theme- modifiers)
     var pop = document.createElement('div');
-    pop.className = 'lead-pop';
+    pop.className = 'lead-pop seasonal-pop theme-' + theme.accent;
     pop.setAttribute('role', 'dialog');
     pop.setAttribute('aria-modal', 'true');
-    pop.setAttribute('aria-labelledby', 'lp-heading');
+    pop.setAttribute('aria-labelledby', 'sp-heading');
     pop.innerHTML =
-      '<div class="lead-pop-card" role="document">'+
+      '<div class="lead-pop-card seasonal-card" role="document">'+
+        '<div class="seasonal-particles motion-' + theme.motion + '" aria-hidden="true"></div>'+
         '<button class="lead-pop-close" type="button" aria-label="Close">&times;</button>'+
-        '<span class="lead-pop-eyebrow">Free consultation</span>'+
-        '<h3 id="lp-heading">Let’s build the team your business <em>needs</em>.</h3>'+
-        '<p>A 30-minute discovery call — no obligation, fully confidential. We’ll come back within one business day.</p>'+
+        '<div class="seasonal-emoji anim-' + theme.anim + '" aria-hidden="true">' + theme.emoji + '</div>'+
+        '<span class="lead-pop-eyebrow seasonal-eyebrow">' + theme.eyebrow + '</span>'+
+        '<h3 id="sp-heading" class="seasonal-headline">Up to <em>75% OFF</em></h3>'+
+        '<p>' + theme.tagline + ' Claim your discount on a new Outbridge engagement.</p>'+
         '<form class="lead-pop-form" novalidate>'+
           '<input name="name" type="text" placeholder="Full name" autocomplete="name" required />'+
           '<input name="email" type="email" placeholder="Work email" autocomplete="email" required />'+
@@ -214,19 +257,35 @@
             '<option>Not sure yet — advise me</option>'+
           '</select>'+
           '<input class="hp-field" name="hp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;" />'+
-          '<button class="btn btn-zest" type="submit">Book my consultation '+
+          '<button class="btn btn-zest" type="submit">Claim my discount '+
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'+
           '</button>'+
           '<div class="lead-pop-err" role="alert"></div>'+
         '</form>'+
-        '<p class="lead-pop-note">We never share your details. NDAs as standard on every engagement.</p>'+
+        '<p class="lead-pop-note">First-time clients only · NDAs as standard · Up to 75% off your first month, scaled by service tier.</p>'+
         '<div class="lead-pop-ok">'+
           '<div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>'+
-          '<h4>Thank you — request received.</h4>'+
-          '<p>A member of the Outbridge team will reach out within one business day.</p>'+
+          '<h4>Discount locked in.</h4>'+
+          '<p>A member of the Outbridge team will follow up within one business day with your custom quote.</p>'+
         '</div>'+
       '</div>';
     document.body.appendChild(pop);
+
+    // Spawn the floating emoji particles
+    var particles = pop.querySelector('.seasonal-particles');
+    if(particles){
+      for(var i=0; i<theme.count; i++){
+        var p = document.createElement('span');
+        p.className = 'seasonal-particle';
+        p.textContent = theme.particle;
+        p.style.left = (Math.random() * 100) + '%';
+        p.style.animationDelay = (-Math.random() * 8) + 's';
+        p.style.animationDuration = (5 + Math.random() * 5) + 's';
+        p.style.fontSize = (12 + Math.random() * 16) + 'px';
+        p.style.opacity = (0.45 + Math.random() * 0.4).toFixed(2);
+        particles.appendChild(p);
+      }
+    }
 
     var card = pop.querySelector('.lead-pop-card');
     var form = pop.querySelector('.lead-pop-form');
@@ -238,6 +297,7 @@
     function remember(submitted){
       try{
         localStorage.setItem(KEY, JSON.stringify({
+          themeKey: theme.key,
           expiresAt: Date.now() + DISMISS_DAYS*24*3600*1000,
           submitted: !!submitted
         }));
@@ -254,12 +314,12 @@
       if(persist) remember(false);
     }
 
-    // Triggers
-    var idleTimer = setTimeout(open, 25000); // 25s of dwell
+    // Triggers — faster than the generic lead popup since this is a promo
+    setTimeout(open, 15000);
     var onScroll = function(){
       var h = document.documentElement;
       var pct = (window.scrollY + window.innerHeight) / Math.max(h.scrollHeight, 1);
-      if(pct > 0.55){ window.removeEventListener('scroll', onScroll); open(); }
+      if(pct > 0.40){ window.removeEventListener('scroll', onScroll); open(); }
     };
     window.addEventListener('scroll', onScroll, {passive:true});
     if(window.matchMedia && window.matchMedia('(pointer:fine)').matches){
@@ -275,7 +335,7 @@
       if(e.key === 'Escape' && pop.classList.contains('open')) close(true);
     });
 
-    // Submit handler
+    // Submit handler — same /api/inquiry pipe, source tagged with the theme
     form.addEventListener('submit', function(e){
       e.preventDefault();
       errBox.classList.remove('show');
@@ -289,8 +349,8 @@
         name: nameInp.value,
         email: emailInp.value,
         service: form.querySelector('select[name="service"]').value || '',
-        message: '(Submitted via on-site popup on ' + path + ')',
-        source: 'popup',
+        message: '(Claimed seasonal promo: ' + theme.eyebrow + ' — up to 75% off — from ' + path + ')',
+        source: 'promo-' + theme.key,
         hp: form.querySelector('input[name="hp"]').value || ''
       };
       fetch('/api/inquiry', {
