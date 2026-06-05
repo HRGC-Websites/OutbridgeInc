@@ -179,16 +179,21 @@
     var KEY = 'ob_seasonal_v1';
     var DISMISS_DAYS = 14;
     var path = (window.location.pathname || '').toLowerCase();
-    if(path.indexOf('/contact') !== -1 || path.indexOf('contact.html') !== -1) return;
+    var qs = (window.location.search || '').toLowerCase();
+    var force = qs.indexOf('seasonal=force') !== -1 || qs.indexOf('promo=preview') !== -1;
+    if(!force && (path.indexOf('/contact') !== -1 || path.indexOf('contact.html') !== -1)) return;
 
     // Respect dismiss / submit unless theme key changed (new month = new popup)
-    try{
-      var stored = JSON.parse(localStorage.getItem(KEY) || 'null');
-      if(stored && stored.expiresAt && stored.expiresAt > Date.now() && stored.themeKey){
-        // Will re-check after we know this month's theme
-        var prevKey = stored.themeKey;
-      }
-    }catch(e){}
+    // — unless ?seasonal=force or ?promo=preview is on the URL (preview mode)
+    var prevKey;
+    if(!force){
+      try{
+        var stored = JSON.parse(localStorage.getItem(KEY) || 'null');
+        if(stored && stored.expiresAt && stored.expiresAt > Date.now() && stored.themeKey){
+          prevKey = stored.themeKey;
+        }
+      }catch(e){}
+    }
 
     // Determine current month using US Eastern Time
     function currentUsMonth(){
@@ -317,18 +322,23 @@
       if(persist) remember(false);
     }
 
-    // Triggers — faster than the generic lead popup since this is a promo
-    setTimeout(open, 15000);
-    var onScroll = function(){
-      var h = document.documentElement;
-      var pct = (window.scrollY + window.innerHeight) / Math.max(h.scrollHeight, 1);
-      if(pct > 0.40){ window.removeEventListener('scroll', onScroll); open(); }
-    };
-    window.addEventListener('scroll', onScroll, {passive:true});
-    if(window.matchMedia && window.matchMedia('(pointer:fine)').matches){
-      document.addEventListener('mouseleave', function(e){
-        if(e.clientY <= 0) open();
-      });
+    // Triggers — faster than the generic lead popup since this is a promo.
+    // In force/preview mode, open immediately.
+    if(force){
+      setTimeout(open, 80);
+    } else {
+      setTimeout(open, 15000);
+      var onScroll = function(){
+        var h = document.documentElement;
+        var pct = (window.scrollY + window.innerHeight) / Math.max(h.scrollHeight, 1);
+        if(pct > 0.40){ window.removeEventListener('scroll', onScroll); open(); }
+      };
+      window.addEventListener('scroll', onScroll, {passive:true});
+      if(window.matchMedia && window.matchMedia('(pointer:fine)').matches){
+        document.addEventListener('mouseleave', function(e){
+          if(e.clientY <= 0) open();
+        });
+      }
     }
 
     // Close handlers
