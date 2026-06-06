@@ -116,9 +116,10 @@
   openFaqFromHash();
   window.addEventListener('hashchange', openFaqFromHash);
 
-  // consultation form — POST to /api/inquiry, handle states
-  var form = document.getElementById('ob-form');
-  if(form){
+  // generic API form handler — works on any <form data-api-form action="/api/inquiry">
+  // Reads every named input/select/textarea, POSTs as JSON, toggles
+  // .sending / .errored / .sent class states. Same .form-err for inline errors.
+  document.querySelectorAll('form[data-api-form]').forEach(function(form){
     var errBox = form.querySelector('.form-err');
     function showError(msg){
       if(errBox){ errBox.textContent = msg; }
@@ -127,23 +128,20 @@
     }
     form.addEventListener('submit', function(e){
       e.preventDefault();
-      var name = document.getElementById('f-name');
-      var email = document.getElementById('f-email');
-      if(!name.value.trim() || !email.value.trim()){
-        form.classList.remove('errored');
-        (!name.value.trim() ? name : email).focus();
-        return;
-      }
       form.classList.remove('errored');
+      if(errBox) errBox.textContent = '';
+      var fields = form.querySelectorAll('input[name], textarea[name], select[name]');
+      // first required-empty wins focus
+      var missing = null;
+      for(var i=0; i<fields.length; i++){
+        if(fields[i].required && !String(fields[i].value || '').trim()){ missing = fields[i]; break; }
+      }
+      if(missing){ missing.focus(); return; }
+      var data = {};
+      for(var j=0; j<fields.length; j++){
+        if(fields[j].name) data[fields[j].name] = fields[j].value;
+      }
       form.classList.add('sending');
-      var data = {
-        name: name.value,
-        company: (document.getElementById('f-company')||{}).value || '',
-        email: email.value,
-        service: (document.getElementById('f-service')||{}).value || '',
-        message: (document.getElementById('f-msg')||{}).value || '',
-        hp: (document.getElementById('f-website')||{}).value || ''
-      };
       fetch(form.getAttribute('action') || '/api/inquiry', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
@@ -151,18 +149,17 @@
       }).then(function(r){
         return r.json().then(function(j){ return {status:r.status, body:j}; }).catch(function(){ return {status:r.status, body:{}}; });
       }).then(function(out){
+        form.classList.remove('sending');
         if(out.status >= 200 && out.status < 300 && out.body && out.body.ok){
-          form.classList.remove('sending');
           form.classList.add('sent');
           return;
         }
-        var msg = (out.body && out.body.error) || 'Something went wrong sending your inquiry. Please email hello@outbridgeinc.com directly.';
-        showError(msg);
+        showError((out.body && out.body.error) || 'Something went wrong sending your form. Please email hello@outbridgeinc.com directly.');
       }).catch(function(){
         showError('Could not reach the server. Please email hello@outbridgeinc.com directly.');
       });
     });
-  }
+  });
 
   // newsletter subscribe
   document.querySelectorAll('.subscribe form').forEach(function(sf){

@@ -36,7 +36,7 @@ export default async function handler(req, res) {
   }
   body = body || {};
 
-  const { name, company, email, phone, service, message, hp, source } = body;
+  const { name, company, email, phone, service, message, hp, source, linkedin, languages, role } = body;
 
   // Honeypot — bots fill hidden fields; silently succeed without sending
   if (hp && hp.toString().trim().length > 0) {
@@ -65,19 +65,34 @@ export default async function handler(req, res) {
     service: cap(service, 200).trim(),
     message: cap(message, 5000).trim(),
     source: cap(source, 80).trim() || 'contact-form',
+    linkedin: cap(linkedin, 400).trim(),
+    languages: cap(languages, 300).trim(),
+    role: cap(role, 200).trim(),
   };
 
-  const subject = `[${safe.source}] New inquiry — ${safe.name}${safe.company ? ' (' + safe.company + ')' : ''}`;
+  const isCareer = safe.source.indexOf('careers') === 0 || safe.role.length > 0;
+  const subject = `[${safe.source}] ${isCareer ? 'New application' : 'New inquiry'} — ${safe.name}${safe.company ? ' (' + safe.company + ')' : ''}${safe.role ? ' · ' + safe.role : ''}`;
+
+  const optionalRow = (label, value, hrefBuilder) => {
+    if (!value) return '';
+    const content = hrefBuilder
+      ? `<a href="${esc(hrefBuilder(value))}" style="color:#3D3DF2;">${esc(value)}</a>`
+      : esc(value);
+    return `<tr><td style="padding:6px 0;color:#43465C;">${label}</td><td style="padding:6px 0;">${content}</td></tr>`;
+  };
 
   const html = `
     <div style="font-family:Hanken Grotesk,Helvetica,Arial,sans-serif;color:#0E0F1C;font-size:15px;line-height:1.55;">
-      <h2 style="font-family:Bricolage Grotesque,Hanken Grotesk,sans-serif;font-weight:800;letter-spacing:-.02em;color:#0E0F1C;margin:0 0 18px;">New inquiry from outbridgeinc.com</h2>
+      <h2 style="font-family:Bricolage Grotesque,Hanken Grotesk,sans-serif;font-weight:800;letter-spacing:-.02em;color:#0E0F1C;margin:0 0 18px;">${isCareer ? 'New application' : 'New inquiry'} from outbridgeinc.com</h2>
       <table style="border-collapse:collapse;width:100%;max-width:640px;">
         <tr><td style="padding:6px 0;color:#43465C;width:120px;">Name</td><td style="padding:6px 0;"><strong>${esc(safe.name)}</strong></td></tr>
-        <tr><td style="padding:6px 0;color:#43465C;">Company</td><td style="padding:6px 0;">${esc(safe.company) || '<span style="color:#83879B;">—</span>'}</td></tr>
+        ${optionalRow('Company', safe.company)}
         <tr><td style="padding:6px 0;color:#43465C;">Email</td><td style="padding:6px 0;"><a href="mailto:${esc(safe.email)}" style="color:#3D3DF2;">${esc(safe.email)}</a></td></tr>
         <tr><td style="padding:6px 0;color:#43465C;">Phone</td><td style="padding:6px 0;">${safe.phone ? `<a href="tel:${esc(safe.phone)}" style="color:#3D3DF2;">${esc(safe.phone)}</a>` : '<span style="color:#83879B;">—</span>'}</td></tr>
-        <tr><td style="padding:6px 0;color:#43465C;">Service</td><td style="padding:6px 0;">${esc(safe.service) || '<span style="color:#83879B;">—</span>'}</td></tr>
+        ${optionalRow('Role', safe.role)}
+        ${optionalRow('LinkedIn / CV', safe.linkedin, v => v)}
+        ${optionalRow('Languages', safe.languages)}
+        ${optionalRow('Service', safe.service)}
         <tr><td style="padding:6px 0;color:#43465C;">Source</td><td style="padding:6px 0;">${esc(safe.source)}</td></tr>
       </table>
       <hr style="border:none;border-top:1px solid rgba(14,15,28,.12);margin:22px 0;" />
@@ -88,21 +103,25 @@ export default async function handler(req, res) {
     </div>
   `;
 
-  const text = [
-    `New inquiry from outbridgeinc.com`,
+  const textRows = [
+    `${isCareer ? 'New application' : 'New inquiry'} from outbridgeinc.com`,
     ``,
-    `Name:    ${safe.name}`,
-    `Company: ${safe.company || '—'}`,
-    `Email:   ${safe.email}`,
-    `Phone:   ${safe.phone || '—'}`,
-    `Service: ${safe.service || '—'}`,
-    `Source:  ${safe.source}`,
-    ``,
-    `Message:`,
-    safe.message || '(no message provided)',
-    ``,
-    `— Sent automatically by outbridgeinc.com. Reply to respond to the prospect.`,
-  ].join('\n');
+    `Name:      ${safe.name}`,
+  ];
+  if (safe.company) textRows.push(`Company:   ${safe.company}`);
+  textRows.push(`Email:     ${safe.email}`);
+  textRows.push(`Phone:     ${safe.phone || '—'}`);
+  if (safe.role) textRows.push(`Role:      ${safe.role}`);
+  if (safe.linkedin) textRows.push(`LinkedIn:  ${safe.linkedin}`);
+  if (safe.languages) textRows.push(`Languages: ${safe.languages}`);
+  if (safe.service) textRows.push(`Service:   ${safe.service}`);
+  textRows.push(`Source:    ${safe.source}`);
+  textRows.push(``);
+  textRows.push(`Message:`);
+  textRows.push(safe.message || '(no message provided)');
+  textRows.push(``);
+  textRows.push(`— Sent automatically by outbridgeinc.com. Reply to respond.`);
+  const text = textRows.join('\n');
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
