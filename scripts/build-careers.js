@@ -292,23 +292,35 @@ const template = (role) => `<!DOCTYPE html>
   <div class="container">
     <div class="role-grid">
       <div class="role-body">
-        <h2>About the role</h2>
-        <p>${role.about}</p>
+        <div class="role-section">
+          <span class="eyebrow">Overview</span>
+          <h2>About the role</h2>
+          <p>${role.about}</p>
+        </div>
 
-        <h2>What you'll do</h2>
-        <ul class="role-list">
-${role.responsibilities.map(r => `          <li>${r}</li>`).join('\n')}
-        </ul>
+        <div class="role-section">
+          <span class="eyebrow">Responsibilities</span>
+          <h2>What you'll do</h2>
+          <ul class="role-list">
+${role.responsibilities.map(r => `            <li>${r}</li>`).join('\n')}
+          </ul>
+        </div>
 
-        <h2>What we're looking for</h2>
-        <ul class="role-list">
-${role.requirements.map(r => `          <li>${r}</li>`).join('\n')}
-        </ul>
+        <div class="role-section">
+          <span class="eyebrow">Profile</span>
+          <h2>What we're looking for</h2>
+          <ul class="role-list">
+${role.requirements.map(r => `            <li>${r}</li>`).join('\n')}
+          </ul>
+        </div>
 
-        <h2>What you get</h2>
-        <ul class="role-list">
-${BENEFITS.map(r => `          <li>${r}</li>`).join('\n')}
-        </ul>
+        <div class="role-section">
+          <span class="eyebrow">Benefits</span>
+          <h2>What you get</h2>
+          <ul class="role-list">
+${BENEFITS.map(r => `            <li>${r}</li>`).join('\n')}
+          </ul>
+        </div>
       </div>
 
       <aside class="role-apply">
